@@ -1,0 +1,47 @@
+flowchart TD
+    subgraph SystemArch["ProposalForge System Architecture"]
+        subgraph Frontend
+            WebFrontend["Web Frontend\n(React + Vite)"]
+        end
+        
+        subgraph BackendLayer
+            BackendServices["Backend Services\n(Express.js)"]
+            AuthService["Auth Service\n(Clerk)"]
+        end
+        
+        subgraph MiddlewareLayer
+            APIGateway["API Gateway"]
+            ServiceRegistry["Service Registry"]
+        end
+        
+        subgraph ServicesLayer
+            DocumentService["Document Service"]
+            ProposalService["Proposal Service"]
+            KnowledgeService["Knowledge Base Service"]
+            AIService["AI Service\n(LLM)"]
+            AnalyticsService["Analytics Service"]
+            ExportService["Export Service"]
+        end
+        
+        WebFrontend <--> BackendServices
+        WebFrontend <--> APIGateway
+        BackendServices <--> ServiceRegistry
+        APIGateway <--> ServiceRegistry
+        AuthService --> APIGateway
+        
+        APIGateway --> ServicesLayer
+        
+        DocumentService --> AIService
+        ProposalService --> AIService
+        KnowledgeService --> AIService
+    end
+    
+    subgraph DataLayer["Data Layer"]
+        PostgreSQL["PostgreSQL\n(RDS)"]
+        Qdrant["Qdrant\n(Vector DB)"]
+        S3["S3\n(Document Storage)"]
+        Redis["Redis\n(Cache)"]
+    end
+    
+    ServicesLayer --> DataLayer
+</flowchart>

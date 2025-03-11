@@ -1,0 +1,6 @@
+flowchart LR
+    FrontendA["Frontend User A"] --> ProposalService["Proposal Service"]
+    ProposalService --> PostgreSQL
+    ProposalService --> WebsocketServer["Websocket Server"]
+    PostgreSQL --> FeatureFlags["Feature Flags"]
+    WebsocketServer --> FrontendB["Frontend User B"]

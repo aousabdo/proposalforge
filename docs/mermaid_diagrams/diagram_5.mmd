@@ -1,0 +1,6 @@
+flowchart LR
+    Frontend --> AuthService["Auth Service"]
+    AuthService --> Clerk
+    AuthService --> APIGateway["API Gateway"]
+    Clerk --> APIGateway
+    APIGateway --> BackendServices["Backend Services"]

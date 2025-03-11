@@ -1,0 +1,6 @@
+flowchart LR
+    Frontend --> DocumentService["Document Service"]
+    DocumentService --> S3
+    S3 --> AgnoAI["Agno AI"]
+    DocumentService --> Qdrant
+    AgnoAI --> Qdrant

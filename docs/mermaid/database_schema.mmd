@@ -1,0 +1,263 @@
+erDiagram
+    Users {
+        UUID id PK
+        VARCHAR external_id
+        VARCHAR email
+        VARCHAR name
+        VARCHAR role
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        JSONB settings
+        TIMESTAMP last_login_at
+        BOOLEAN is_active
+    }
+    
+    Workspaces {
+        UUID id PK
+        VARCHAR name
+        TEXT description
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        UUID owner_id FK
+        BOOLEAN is_archived
+        JSONB settings
+        UUID organization_id FK "For Enterprise"
+        BOOLEAN is_collaborative "For Enterprise"
+        JSONB collaboration_settings "For Enterprise"
+    }
+    
+    UserWorkspaces {
+        UUID user_id PK,FK
+        UUID workspace_id PK,FK
+        VARCHAR role
+        TIMESTAMP joined_at
+    }
+    
+    Documents {
+        UUID id PK
+        UUID workspace_id FK
+        VARCHAR name
+        VARCHAR type
+        VARCHAR category
+        VARCHAR s3_key
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        UUID created_by FK
+        VARCHAR status
+        BIGINT file_size
+        VARCHAR mime_type
+        JSONB metadata
+        BOOLEAN is_global
+    }
+    
+    DocumentChunks {
+        UUID id PK
+        UUID document_id FK
+        TEXT content
+        JSONB metadata
+        VARCHAR embedding_id
+        TIMESTAMP created_at
+    }
+    
+    Proposals {
+        UUID id PK
+        UUID workspace_id FK
+        VARCHAR name
+        TEXT description
+        VARCHAR status
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        UUID created_by FK
+        JSONB settings
+        TIMESTAMP due_date
+        VARCHAR customer
+        DECIMAL estimated_value
+        JSONB metadata
+    }
+    
+    Outlines {
+        UUID id PK
+        UUID proposal_id FK
+        VARCHAR name
+        TEXT description
+        INTEGER version
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        UUID created_by FK
+        BOOLEAN is_active
+    }
+    
+    OutlineItems {
+        UUID id PK
+        UUID outline_id FK
+        UUID parent_id FK "Self-reference"
+        VARCHAR title
+        INTEGER order
+        UUID section_id FK
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        TEXT description
+        VARCHAR estimated_length
+        VARCHAR status
+    }
+    
+    Sections {
+        UUID id PK
+        UUID proposal_id FK
+        UUID outline_id FK
+        UUID parent_id FK
+        INTEGER order
+        VARCHAR title
+        TEXT content
+        VARCHAR status
+        UUID assigned_to FK
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        UUID created_by FK
+        UUID last_updated_by FK
+        INTEGER word_count
+        JSONB metadata
+        VARCHAR review_status
+    }
+    
+    WinThemes {
+        UUID id PK
+        UUID proposal_id FK
+        VARCHAR name
+        TEXT description
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        UUID created_by FK
+        INTEGER priority
+        BOOLEAN is_active
+    }
+    
+    Comments {
+        UUID id PK
+        UUID section_id FK
+        UUID user_id FK
+        TEXT content
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        BOOLEAN resolved
+        UUID resolved_by FK
+        TIMESTAMP resolved_at
+        UUID parent_id FK "For threaded comments"
+        JSONB position "For inline comments"
+    }
+    
+    FeatureFlags {
+        UUID id PK
+        VARCHAR name
+        TEXT description
+        BOOLEAN enabled
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        JSONB conditions
+        JSONB metadata
+    }
+    
+    KnowledgeItems {
+        UUID id PK
+        VARCHAR name
+        TEXT description
+        VARCHAR s3_key
+        VARCHAR type
+        VARCHAR category
+        BOOLEAN is_global
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        UUID created_by FK
+        UUID workspace_id FK "Optional"
+        VARCHAR[] tags "Array of tags"
+        JSONB metadata
+    }
+    
+    SectionVersions {
+        UUID id PK
+        UUID section_id FK
+        TEXT content
+        TIMESTAMP created_at
+        UUID created_by FK
+        INTEGER version_number
+        TEXT change_description
+        JSONB metadata
+    }
+    
+    Feedback {
+        UUID id PK
+        UUID user_id FK
+        TEXT content
+        VARCHAR type
+        JSONB context
+        INTEGER rating
+        TIMESTAMP created_at
+    }
+    
+    %% Enterprise-specific tables (included but noted as Enterprise)
+    Organizations {
+        UUID id PK "Enterprise"
+        VARCHAR name "Enterprise"
+        TEXT description "Enterprise"
+        TIMESTAMP created_at "Enterprise"
+        TIMESTAMP updated_at "Enterprise"
+        JSONB settings "Enterprise"
+        VARCHAR subscription_tier "Enterprise"
+        VARCHAR subscription_status "Enterprise"
+    }
+    
+    OrganizationUsers {
+        UUID organization_id PK,FK "Enterprise"
+        UUID user_id PK,FK "Enterprise"
+        VARCHAR role "Enterprise"
+        TIMESTAMP joined_at "Enterprise"
+    }
+    
+    Teams {
+        UUID id PK "Enterprise"
+        UUID organization_id FK "Enterprise"
+        VARCHAR name "Enterprise"
+        TEXT description "Enterprise"
+        TIMESTAMP created_at "Enterprise"
+        TIMESTAMP updated_at "Enterprise"
+    }
+    
+    TeamMembers {
+        UUID team_id PK,FK "Enterprise"
+        UUID user_id PK,FK "Enterprise"
+        VARCHAR role "Enterprise"
+        TIMESTAMP joined_at "Enterprise"
+    }
+    
+    %% Relationships
+    Users ||--o{ UserWorkspaces : has
+    Workspaces ||--o{ UserWorkspaces : has
+    
+    Users ||--o{ Workspaces : owns
+    Workspaces ||--o{ Documents : contains
+    Workspaces ||--o{ Proposals : contains
+    
+    Documents ||--o{ DocumentChunks : chunked_into
+    
+    Proposals ||--o{ Outlines : has
+    Proposals ||--o{ Sections : contains
+    Proposals ||--o{ WinThemes : has
+    
+    Outlines ||--o{ OutlineItems : contains
+    OutlineItems ||--o{ OutlineItems : has_children
+    
+    Sections ||--o{ Comments : has
+    Sections ||--o{ SectionVersions : has_versions
+    
+    OutlineItems ||--|| Sections : links_to
+    
+    Users ||--o{ Comments : makes
+    Users ||--o{ Feedback : submits
+    
+    %% Enterprise relationships
+    Organizations ||--o{ OrganizationUsers : has "Enterprise"
+    Users ||--o{ OrganizationUsers : belongs_to "Enterprise"
+    Organizations ||--o{ Teams : has "Enterprise"
+    Teams ||--o{ TeamMembers : has "Enterprise"
+    Users ||--o{ TeamMembers : belongs_to "Enterprise"
+    Organizations ||--o{ Workspaces : owns "Enterprise"

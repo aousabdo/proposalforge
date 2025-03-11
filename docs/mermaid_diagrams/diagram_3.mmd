@@ -1,0 +1,7 @@
+flowchart LR
+    Frontend --> ProposalService["Proposal Service"]
+    ProposalService --> DocumentService["Document Service"]
+    DocumentService --> Qdrant
+    ProposalService --> AIService["AI Service"]
+    Qdrant --> AIService
+    AIService --> PostgreSQL

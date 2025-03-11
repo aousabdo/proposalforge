@@ -1,0 +1,18 @@
+flowchart TD
+    subgraph AWS
+        CloudFront --> S3Frontend["S3\n(Frontend)"]
+        
+        Route53 --> ALB
+        ALB --> EC2Autoscale["EC2\n(Autoscale)"]
+        
+        EC2Autoscale --> S3Documents["S3\n(Documents)"]
+        EC2Autoscale --> RDS["RDS\n(PostgreSQL)"]
+        EC2Autoscale --> ElastiCache["ElastiCache\n(Redis)"]
+        EC2Autoscale --> EC2Qdrant["EC2\n(Qdrant)"]
+        
+        CloudWatch
+    end
+    
+    OpenAI["OpenAI API"] <--> EC2Autoscale
+    ClerkAPI["Clerk API"] <--> EC2Autoscale
+</flowchart>
