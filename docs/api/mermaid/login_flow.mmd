@@ -1,0 +1,13 @@
+sequenceDiagram
+    participant Browser
+    participant Frontend
+    participant Clerk
+    participant ProposalForge
+
+    Browser->>Frontend: Login
+    Frontend->>Clerk: Login
+    Clerk-->>Clerk: Authenticate
+    Clerk->>Frontend: JWT Token
+    Frontend->>Browser: JWT Token
+    Browser->>Frontend: API Request with Token
+    Frontend->>ProposalForge: API Request with Token 

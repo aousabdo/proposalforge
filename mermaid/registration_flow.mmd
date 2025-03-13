@@ -1,0 +1,13 @@
+sequenceDiagram
+    participant Browser
+    participant Frontend
+    participant Clerk
+    participant ProposalForge
+
+    Browser->>Frontend: Register
+    Frontend->>Clerk: Register
+    Clerk-->>Clerk: Verify Email
+    Clerk->>Frontend: Success
+    Frontend->>Browser: Redirect
+    Browser->>Frontend: Create User
+    Frontend->>ProposalForge: Create User 

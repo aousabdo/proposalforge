@@ -1,0 +1,15 @@
+sequenceDiagram
+    participant Browser
+    participant Frontend
+    participant Clerk
+
+    Browser->>Frontend: Login
+    Frontend->>Clerk: Login
+    Clerk-->>Clerk: Primary Auth
+    Clerk->>Frontend: MFA Prompt
+    Frontend->>Browser: MFA Prompt
+    Browser->>Frontend: MFA Code
+    Frontend->>Clerk: MFA Code
+    Clerk-->>Clerk: Verify MFA
+    Clerk->>Frontend: JWT Token
+    Frontend->>Browser: JWT Token 
