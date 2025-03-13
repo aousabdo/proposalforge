@@ -117,6 +117,39 @@ ProposalForge uses [Clerk](https://clerk.dev/) as the authentication provider fo
 └─────────┘                 └──────────┘                 └───────┘
 ``` -->
 
+### Token Refresh Flow
+
+![Token Refresh Flow](./images/token_refresh_flow.png)
+
+The token refresh flow ensures uninterrupted access to the API by automatically refreshing JWT tokens before they expire. This process is handled transparently by the frontend application, requiring no user intervention.
+
+1. The frontend application monitors the expiration time of the current JWT token
+2. When the token is close to expiring (typically 5 minutes before expiration), the refresh process begins
+3. The frontend requests a new token from Clerk using the refresh token
+4. Clerk validates the refresh token and issues a new JWT token with a new expiration time
+5. The frontend updates the stored token in the browser
+6. Subsequent API requests use the new token automatically
+
+This flow ensures that users don't experience session timeouts during active use of the application.
+
+<!-- ```
+┌──────────┐                 ┌───────┐
+│          │                 │       │
+│ Frontend │─── Refresh ────►│ Clerk │
+│          │                 │       │
+└──────────┘                 └───┬───┘
+                                 │
+                                 │
+                           Validate Refresh
+                                 │
+                                 ▼
+┌──────────┐                 ┌───────┐
+│          │                 │       │
+│ Frontend │◄── New Token ───│ Clerk │
+│          │                 │       │
+└──────────┘                 └───────┘
+``` -->
+
 ## JWT Structure and Claims
 
 The JWT (JSON Web Token) issued by Clerk contains the following claims:

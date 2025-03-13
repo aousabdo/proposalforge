@@ -1,0 +1,21 @@
+sequenceDiagram
+    participant Client
+    participant RateLimiter
+    participant API
+    participant Client2
+
+    Client->>API: Request 1
+    API->>RateLimiter: Check limits
+    RateLimiter->>API: Allowed (95/100 remaining)
+    API->>Client: Response with headers<br/>X-RateLimit-Limit: 100<br/>X-RateLimit-Remaining: 95<br/>X-RateLimit-Reset: 1589458403
+    
+    Client->>API: Many requests in short time
+    API->>RateLimiter: Check limits
+    RateLimiter->>API: Rejected (0/100 remaining)
+    API->>Client: 429 Too Many Requests<br/>X-RateLimit-Limit: 100<br/>X-RateLimit-Remaining: 0<br/>X-RateLimit-Reset: 1589458403
+    
+    Note over Client: Exponential backoff
+    Client->>Client: Wait until reset time
+    
+    Note over Client2: Client implements rate limiting
+    Client2->>Client2: Client-side throttling<br/>Prevent rate limit hits 

@@ -398,7 +398,15 @@ Response:
 
 For long-running operations, clients can register webhooks to receive notifications:
 
+### Webhook Flow
+
+![Webhook Flow](./images/webhook_flow.png)
+
+The webhook system enables asynchronous communication between ProposalForge and client applications. This is particularly useful for long-running operations such as document processing, outline generation, and PDF exports.
+
 ### Webhook Registration
+
+Clients register webhooks by specifying a URL, the events to subscribe to, and an optional secret for signature verification:
 
 ```json
 POST /webhooks
@@ -406,9 +414,23 @@ POST /webhooks
 {
   "url": "https://example.com/webhook-handler",
   "events": ["operation.completed", "document.processed"],
-  "description": "Notification endpoint for async operations"
+  "description": "Notification endpoint for async operations",
+  "secret": "whsec_abcdefgh12345678" // Optional but recommended for security
 }
 ```
+
+### Webhook Security
+
+All webhook deliveries include a signature header (`X-Webhook-Signature`) that clients should validate to ensure the request is authentic:
+
+```
+X-Webhook-Signature: sha256=5257a869e7ecebeda32affa62cdca3fa51cad7e77a0e56ff536d0ce8e1e13a21
+```
+
+To verify the signature:
+1. Get the raw request body
+2. Create an HMAC using SHA-256 with your webhook secret as the key
+3. Compare the calculated signature with the one in the header
 
 ### Webhook Payload Format
 
@@ -416,6 +438,7 @@ POST /webhooks
 {
   "event": "operation.completed",
   "timestamp": "2023-05-15T10:32:45.789Z",
+  "id": "evt_987654321",
   "data": {
     "operationId": "7b15e8c2-6a35-4127-8f98-b72d7bc5417b",
     "status": "completed",
@@ -427,17 +450,45 @@ POST /webhooks
 }
 ```
 
+### Webhook Retry Policy
+
+If a webhook delivery fails (non-2xx response), ProposalForge will retry with exponential backoff:
+- 1st retry: 5 seconds after initial failure
+- 2nd retry: 30 seconds after previous retry
+- 3rd retry: 2 minutes after previous retry
+- 4th retry: 10 minutes after previous retry
+- 5th retry: 30 minutes after previous retry
+
+After 5 failed retries, the webhook will be marked as failed and no further attempts will be made.
+
 ## Rate Limiting
 
 The ProposalForge API implements rate limiting to ensure fair usage:
 
+### Rate Limiting Flow
+
+![Rate Limiting Flow](./images/rate_limiting_flow.png)
+
+The rate limiting system protects the API from excessive usage and ensures fair resource allocation across all clients. When a client exceeds the allowed rate limits, requests will be rejected with a 429 status code until the rate limit period resets.
+
 ### Rate Limit Headers
 
+All API responses include rate limit information in the headers:
+
 ```
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1589458403
+X-RateLimit-Limit: 100          # Maximum requests allowed in the current period
+X-RateLimit-Remaining: 95       # Remaining requests in the current period
+X-RateLimit-Reset: 1589458403   # Unix timestamp when the rate limit resets
 ```
+
+### Client-Side Rate Limit Handling
+
+Clients should implement the following best practices for handling rate limits:
+
+1. **Monitor Headers**: Track the `X-RateLimit-Remaining` and `X-RateLimit-Reset` headers
+2. **Preemptive Throttling**: Slow down requests as `X-RateLimit-Remaining` approaches zero
+3. **Exponential Backoff**: When receiving a 429 response, implement exponential backoff with jitter
+4. **Request Prioritization**: Prioritize critical requests when approaching limits
 
 ### Rate Limit Exceeded Response (429 Too Many Requests)
 
@@ -454,6 +505,14 @@ X-RateLimit-Reset: 1589458403
   }
 }
 ```
+
+### Rate Limit Tiers
+
+| Tier | Requests/Minute | Burst Limit | Notes |
+|------|----------------|-------------|-------|
+| Standard | 100 | 20/sec | Default for all API clients |
+| Enterprise | 1000 | 50/sec | Available for Enterprise customers |
+| Custom | Varies | Varies | Custom limits for specific integrations |
 
 ## File Uploads
 

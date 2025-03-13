@@ -1,0 +1,20 @@
+sequenceDiagram
+    participant Client
+    participant ProposalForge
+    participant ClientServer
+
+    Client->>ProposalForge: Register webhook<br/>POST /v1/webhooks<br/>{url, events, secret}
+    ProposalForge->>Client: 201 Created<br/>{id: "wh_123", url, events}
+    
+    Note over ProposalForge: Event occurs (e.g., proposal updated)
+    ProposalForge->>ProposalForge: Generate webhook payload<br/>Sign with webhook secret
+    ProposalForge->>ClientServer: POST to webhook URL<br/>X-Webhook-Signature: sha256=...
+    
+    Note over ClientServer: Verify webhook
+    ClientServer-->>ClientServer: Validate signature<br/>with webhook secret
+    ClientServer->>ProposalForge: 200 OK
+    
+    Note over ProposalForge: Retry logic
+    ProposalForge--xClientServer: Failed delivery attempt
+    ProposalForge->>ProposalForge: Exponential backoff
+    ProposalForge->>ClientServer: Retry delivery 
